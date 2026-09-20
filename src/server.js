@@ -144,6 +144,15 @@ async function handleCapture(req, res) {
 }
 
 const server = http.createServer(async (req, res) => {
+  if (req.method === 'GET' && req.url === '/') {
+    return sendJson(res, 200, {
+      service: 'ShotSweep Capture Worker',
+      description: 'Browser capture worker for ShotSweep, powered by Playwright and Chromium.',
+      status: 'operational',
+      version: '1.0.0'
+    })
+  }
+
   if (req.method === 'GET' && req.url === '/health') {
     return sendJson(res, 200, {
       ok: true,
