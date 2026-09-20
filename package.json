@@ -1,0 +1,17 @@
+{
+  "name": "@nfsfu234/shotsweep-capture",
+  "version": "1.0.0",
+  "private": false,
+  "description": "Browser capture worker for ShotSweep.",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "playwright": "1.62.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
