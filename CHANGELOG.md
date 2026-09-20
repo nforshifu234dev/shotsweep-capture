@@ -12,6 +12,25 @@ Changes that have not yet been released.
 
 ---
 
+## [1.1.0] - 2026-09-20
+
+### Added
+
+- Use `@nfsfu234/shotsweep` as the browser capture engine.
+- Support ShotSweep capture options including viewport configuration and selector-based waiting.
+- Added HealthHub capture support with a 6000ms post-load wait.
+- Return captured screenshots as PNG data URLs.
+- Recursively discover PNG screenshots from ShotSweep output directories.
+- Automatically clean up temporary capture directories.
+
+### Changed
+
+- Replaced direct Playwright screenshot orchestration with ShotSweep CLI execution.
+- The capture worker now delegates browser capture behavior to ShotSweep.
+- Browser lifecycle and Chromium management are handled by the Playwright-based ShotSweep runtime.
+
+---
+
 ## [1.0.0] - 2026-09-20
 
 ### 🎉 Added
