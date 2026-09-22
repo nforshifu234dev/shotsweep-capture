@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import express from 'express'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
@@ -6,6 +7,7 @@ import os from 'node:os'
 import path from 'node:path'
 
 import { TARGETS } from './targets.js'
+import { enqueue, queueSize } from './queue.js'
 
 const execFileAsync = promisify(execFile)
 
@@ -33,65 +35,67 @@ function getTarget(key) {
   return TARGETS[key]
 }
 
-async function runShotSweepCapture(target) {
-  const tempDir = await fs.mkdtemp(
-    path.join(os.tmpdir(), 'shotsweep-capture-')
-  )
+export async function runShotSweepCapture(target) {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'shotsweep-capture-'))
 
   try {
     const args = [
-      'capture',
-      '--url',
-      target.url,
-      '--out',
-      tempDir,
-      '--viewport',
-      '1280x800',
-      '--wait-until',
-      'load',
-      '--timeout',
-      '15000',
-      '--json',
-      '--quiet',
+      'capture', '--url', target.url, '--out', tempDir,
     ]
 
-    if (target.wait) {
-      args.push('--wait', target.wait)
+    if (target.selector) {
+      args.push('--mode', 'element', '--selector', target.selector)
+    } else {
+      args.push('--viewport', '1280x800')
     }
+
+    args.push('--wait-until', 'load', '--timeout', '15000', '--json', '--quiet')
+
+    if (target.wait) args.push('--wait', target.wait)
 
     const shotsweepBin =
       process.platform === 'win32'
         ? path.join(process.cwd(), 'node_modules', '.bin', 'shotsweep.cmd')
         : path.join(process.cwd(), 'node_modules', '.bin', 'shotsweep')
 
-    const { stdout, stderr } = await execFileAsync(
-      shotsweepBin,
-      args,
-      {
+    let stdout, stderr
+    try {
+      ;({ stdout, stderr } = await execFileAsync(shotsweepBin, args, {
         cwd: process.cwd(),
         timeout: 45000,
         maxBuffer: 10 * 1024 * 1024,
-      }
-    )
-
-    if (stderr) {
-      console.log('ShotSweep stderr:', stderr)
+        shell: process.platform === 'win32',
+      }))
+    } catch (execErr) {
+      // Non-zero exit (e.g. selector never matched) still writes a valid manifest.
+      // Read it before tempDir gets cleaned up, so the real per-URL error surfaces
+      // instead of a bare "Command failed" with empty stderr.
+      let detail = execErr.stderr || execErr.message
+      try {
+        const summary = JSON.parse(execErr.stdout)
+        const manifest = JSON.parse(await fs.readFile(summary.manifestPath, 'utf8'))
+        detail = manifest[0]?.error || detail
+      } catch { /* fall back to detail above if manifest unreadable */ }
+      throw new Error(`ShotSweep capture failed for ${target.url}: ${detail}`)
     }
 
+    if (stderr) console.log('ShotSweep stderr:', stderr)
     console.log('ShotSweep output:', stdout)
 
     const files = await findPngFiles(tempDir)
-
     if (files.length === 0) {
       throw new Error('ShotSweep completed but produced no PNG screenshot.')
     }
 
     const screenshotPath = files[0]
     const buffer = await fs.readFile(screenshotPath)
-
     return `data:image/png;base64,${buffer.toString('base64')}`
   } finally {
-    await fs.rm(tempDir, { recursive: true, force: true })
+    if (!process.env.KEEP_CAPTURE_TEMP) {
+      await fs.rm(tempDir, { recursive: true, force: true })
+    } else {
+      console.log(`[DEBUG] Kept temp dir: ${tempDir}`)
+    }
   }
 }
 
@@ -175,6 +179,22 @@ app.post('/capture', async (request, response) => {
   } finally {
     inFlight -= 1
   }
+})
+
+app.post('/wishit/capture', (request, response) => {
+  if (!isAuthorized(request)) {
+    return response.status(401).json({ error: 'Unauthorized.' })
+  }
+
+  const { slug, heroHash } = request.body ?? {}
+
+  if (!slug || typeof slug !== 'string') {
+    return response.status(400).json({ error: 'slug is required.' })
+  }
+
+  enqueue(slug, heroHash)
+
+  return response.status(202).json({ queued: true, queueSize: queueSize() })
 })
 
 app.listen(PORT, () => {
