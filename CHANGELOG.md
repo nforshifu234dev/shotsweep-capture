@@ -10,6 +10,27 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) pr
 
 Changes that have not yet been released.
 
+## [1.2.1] - 2026-09-22
+
+### Fixed
+
+- `queue.js` now requests `/w/{slug}?ss_capture=1` instead of the bare WishDrop URL. WishIT's `CookieConsent` component already gates on this param to skip rendering the privacy banner and skip firing GA/Meta Pixel for automated renders — the capture worker just wasn't sending it, so every hero screenshot (WishDrops and Templates alike, since both resolve through `/w/[id]`) had the banner baked in.
+
+This closes out OG hero image capture as originally scoped: dynamic slug-based capture, FIFO per-slug queue, element-mode cropping, and now a clean banner-free render for both WishDrops and Templates.
+
+## [1.2.0] - 2026-09-22
+
+### Added
+
+- `POST /wishit/capture` — dynamic, slug-based capture endpoint for WishDrop OG hero images, separate from the fixed `TARGETS` allowlist used by `/capture`.
+- FIFO capture queue (`src/queue.js`), deduplicated by slug — repeated saves to the same WishDrop before it's processed replace the pending job instead of queuing duplicates.
+- Element-mode capture support in `runShotSweepCapture`: a `target.selector` triggers `--mode element --selector <selector>`, cropping to a single element (e.g. `[data-og-hero]`) instead of the full page. Targets without a `selector` (all existing `TARGETS` entries) keep the original full-page `1280×800` viewport capture, unchanged.
+- Capture results are reported back to WishIT via `POST /api/internal/og-hero` on the WishIT origin, authenticated with a separate shared secret.
+
+### Changed
+
+- `runShotSweepCapture` now builds its `--mode`/`--selector`/`--viewport` args conditionally based on the target, rather than always capturing full-page.
+
 ---
 
 ## [1.1.0] - 2026-09-20

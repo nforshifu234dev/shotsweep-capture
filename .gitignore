@@ -3,3 +3,7 @@ node_modules/
 .env.*
 npm-debug.log*
 .DS_Store
+*.zip
+zip_project.py
+changelog-full.diff
+changelog-stat.txt

@@ -1,21 +1,23 @@
 {
   "name": "@nfsfu234/shotsweep-capture",
-  "version": "1.1.0",
+  "version": "1.2.1",
   "private": true,
   "description": "Browser capture worker for ShotSweep.",
   "type": "module",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "node --watch src/server.js"
+    "dev": "node --watch src/server.js",
+    "release:diff": "git add -A && git diff --cached --stat > changelog-stat.txt && git diff --cached > changelog-full.diff && echo 'Wrote changelog-stat.txt and changelog-full.diff'"
   },
   "dependencies": {
-    "@nfsfu234/shotsweep": "^1.1.0",
+    "@nfsfu234/shotsweep": "^1.2.0",
+    "dotenv": "^18.0.3",
     "express": "^5.1.0"
   },
   "engines": {
     "node": ">=20"
   },
   "allowScripts": {
-    "@nfsfu234/shotsweep@1.1.0": true
+    "@nfsfu234/shotsweep@1.2.0": true
   }
 }
