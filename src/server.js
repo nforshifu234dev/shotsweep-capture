@@ -45,6 +45,13 @@ export async function runShotSweepCapture(target) {
 
     if (target.selector) {
       args.push('--mode', 'element', '--selector', target.selector)
+    } else if (target.viewport) {
+      const viewportRegex = /^\d+x\d+$/
+      const viewport = viewportRegex.test(target.viewport)
+        ? target.viewport
+        : '1280x800'
+
+      args.push('--viewport', viewport)
     } else {
       args.push('--viewport', '1280x800')
     }

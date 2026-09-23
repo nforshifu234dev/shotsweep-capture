@@ -37,6 +37,7 @@ async function captureAndReport(slug, heroHash) {
     url: `https://www.wish-it.app/w/${slug}?ss_capture=1`,
     label: slug,
     selector: '[data-og-hero]',
+    viewport: '1200x630',
   })
   await reportResult(slug, { status: 'done', dataUrl, heroHash })
 }

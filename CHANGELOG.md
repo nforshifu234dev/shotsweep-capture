@@ -6,9 +6,12 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) pr
 
 ---
 
-## [Unreleased]
+## [1.2.2] - 2026-09-23
 
-Changes that have not yet been released.
+### Changed
+
+- WishDrop OG hero captures now use a `1200 × 630` viewport to match the standard Open Graph image dimensions.
+- Custom viewport values are validated before being passed to ShotSweep. Invalid values fall back to the default `1280 × 800` viewport.
 
 ## [1.2.1] - 2026-09-22
 
